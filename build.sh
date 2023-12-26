@@ -69,10 +69,14 @@ function init() {
 	OLD_ENV="$(env)"
 	pushd "$SCRIPTPATH" >/dev/null
 
-	tput civis
+	if [ -z "$TERM" ]; then
+		tput civis
+	fi
 
 	function cleanup() {
-		tput cnorm
+		if [ -z "$TERM" ]; then
+			tput cnorm
+		fi
 		popd >/dev/null
 
 		for line in $(env); do
