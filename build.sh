@@ -9,15 +9,17 @@ jobs=$(nproc)
 verbose='false'
 build='all'
 clean='false'
+out_dir="$SCRIPTPATH/out"
 
 print_usage() {
 	printf "Usage: ./build.sh [options...]\n"
 	printf "Options:\n"
-	printf "  -v, --verbose  Verbose output\n"
-	printf "  --clean        Clean build directory\n"
-	printf "  -j, --jobs     Number of jobs to run simultaneously (default $(nproc))\n"
-	printf "  -b, --build    [all|protobuf|x264|x265|libvpx|opus|dav1d|svt-av1|opencv|ffmpeg] Build specific library (default: all)\n"
-	printf "  -h, --help     Show this help message\n"
+	printf "  -v, --verbose    Verbose output\n"
+	printf "  --clean          Clean build directory\n"
+	printf "  -j, --jobs       Number of jobs to run simultaneously (default $jobs)\n"
+	printf "  -b, --build      [all|protobuf|x264|x265|libvpx|opus|dav1d|svt-av1|opencv|ffmpeg] Build specific library (default: $build)\n"
+    printf "  -o, --out        Output directory (default: $out_dir)\n"
+	printf "  -h, --help       Show this help message\n"
 }
 
 string_contain() { case $2 in *$1*) return 0 ;; *) return 1 ;; esac }
@@ -47,6 +49,11 @@ function parse_args() {
 			clean='true'
 			shift # Remove argument name
 			;;
+        -o | --out)
+            out_dir=$2
+            shift # Remove argument name
+            shift # Remove argument value
+            ;;
 		*)
 			echo "Unknown option: $1"
 			print_usage
@@ -83,15 +90,15 @@ function init() {
 
 	trap cleanup EXIT
 
-	mkdir -p $SCRIPTPATH/out
-	mkdir -p $SCRIPTPATH/build
+	mkdir -p $out_dir
+	mkdir -p "$SCRIPTPATH/build"
 
 	if [ "$verbose" = 'true' ]; then
 		set -x
 	fi
 
 	if [ "$clean" = 'true' ]; then
-		rm -rf $SCRIPTPATH/build $SCRIPTPATH/out
+		rm -rf "$SCRIPTPATH/build"
 	fi
 
 	if [ "$build_lib" = 'all' ]; then
@@ -212,7 +219,7 @@ function builder() {
 	function inner() {
 		set -exo pipefail
 		SOURCEPATH=$SCRIPTPATH/$1
-		OUTPATH=$SCRIPTPATH/out
+		OUTPATH=$out_dir
 		$build_inner
 	}
 
@@ -358,9 +365,15 @@ init "$@"
 check_cc
 check_ninja
 check_cmake
-check_yasm
 check_nasm
-check_meson
+
+if string_contain "libvpx" $build_lib; then
+	check_yasm
+fi
+
+if string_contain "dav1d" $build_lib; then
+	check_meson
+fi
 
 builder "protobuf" "CMakeLists.txt" build_protobuf
 builder "x264" "configure" build_x264
