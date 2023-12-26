@@ -75,12 +75,12 @@ function init() {
 	OLD_ENV="$(env)"
 	pushd "$SCRIPTPATH" >/dev/null
 
-	if [ ! -z "$TERM" ]; then
+	if [ ! -z "$TERM" ] && tty -s; then
 		tput civis
 	fi
 
 	function cleanup() {
-		if [ ! -z "$TERM" ]; then
+		if [ ! -z "$TERM" ] && tty -s; then
 			tput cnorm
 		fi
 		popd >/dev/null
