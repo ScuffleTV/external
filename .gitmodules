@@ -3,7 +3,7 @@
 	url = https://github.com/protocolbuffers/protobuf.git
 [submodule "x264"]
 	path = x264
-	url = https://code.videolan.org/videolan/x264.git
+	url = https://github.com/ScuffleTV/x264-mirror.git
 [submodule "x265"]
 	path = x265
 	url = https://bitbucket.org/multicoreware/x265_git.git
@@ -15,7 +15,7 @@
 	url = https://github.com/xiph/opus.git
 [submodule "dav1d"]
 	path = dav1d
-	url = https://code.videolan.org/videolan/dav1d.git
+	url = https://github.com/ScuffleTV/dav1d-mirror.git
 [submodule "SVT-AV1"]
 	path = SVT-AV1
 	url = https://gitlab.com/AOMediaCodec/SVT-AV1.git
