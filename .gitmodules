@@ -1,0 +1,27 @@
+[submodule "protobuf"]
+	path = protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "x264"]
+	path = x264
+	url = https://code.videolan.org/videolan/x264.git
+[submodule "x265"]
+	path = x265
+	url = https://bitbucket.org/multicoreware/x265_git.git
+[submodule "libvpx"]
+	path = libvpx
+	url = https://chromium.googlesource.com/webm/libvpx.git
+[submodule "opus"]
+	path = opus
+	url = https://github.com/xiph/opus.git
+[submodule "dav1d"]
+	path = dav1d
+	url = https://code.videolan.org/videolan/dav1d.git
+[submodule "SVT-AV1"]
+	path = SVT-AV1
+	url = https://gitlab.com/AOMediaCodec/SVT-AV1.git
+[submodule "FFmpeg"]
+	path = FFmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git
+[submodule "opencv"]
+	path = opencv
+	url = https://github.com/opencv/opencv
