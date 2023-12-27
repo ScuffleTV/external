@@ -25,7 +25,7 @@ print_usage() {
 }
 
 build_target() {
-	local target=$1
+	local target=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 
 	if [[ $build_lib =~ "$target" ]]; then
 		return 0
