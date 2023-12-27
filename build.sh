@@ -9,7 +9,6 @@ jobs=$(nproc)
 verbose='false'
 build_lib='all'
 clean='false'
-install='false'
 out_dir="$SCRIPTPATH/out"
 
 print_usage() {
@@ -20,7 +19,6 @@ print_usage() {
 	printf "  -j, --jobs       Number of jobs to run simultaneously (default $jobs)\n"
 	printf "  -b, --build      [all|protobuf|x264|x265|libvpx|opus|dav1d|svt-av1|opencv|ffmpeg] Build specific library (default: $build)\n"
 	printf "  --prefix         Out Prefix (default: $out_dir)\n"
-	printf "  --install        Install to prefix\n"
 	printf "  -h, --help       Show this help message\n"
 }
 
@@ -63,10 +61,6 @@ function parse_args() {
 			out_dir=$2
 			shift # Remove argument name
 			shift # Remove argument value
-			;;
-		--install)
-			install='true'
-			shift # Remove argument name
 			;;
 		*)
 			echo "Unknown option: $1"
@@ -244,7 +238,6 @@ function builder() {
 		SOURCEPATH=$SCRIPTPATH/$1
 		OUTPATH=$out_dir
 		DOBUILD=$do_build
-		DOINSTALL=$do_install
 		$build_inner
 
 		echo $settings_value >$build_done
@@ -434,7 +427,6 @@ fi
 echo "Settings:"
 echo "  Build: $build_lib"
 echo "  Clean: $clean"
-echo "  Install: $install"
 echo "  Prefix: $out_dir"
 echo "  CC: $CC"
 echo "  CXX: $CXX"
