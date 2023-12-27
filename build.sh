@@ -439,6 +439,7 @@ init "$@"
 check_cc
 check_tool ninja
 check_tool cmake
+check_tool make
 check_tool nasm
 
 if string_contain "libvpx" $build_lib; then
@@ -447,6 +448,14 @@ fi
 
 if string_contain "dav1d" $build_lib; then
 	check_tool meson
+fi
+
+if string_contain "opus" $build_lib; then
+	check_tool libtool
+fi
+
+if string_contain "ffmpeg" $build_lib; then
+	check_tool pkg-config
 fi
 
 echo "Settings:"
