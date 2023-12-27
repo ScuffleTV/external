@@ -132,17 +132,20 @@ function check_cc() {
 		export CC=$(which clang)
 		export CXX=$(which clang++) || $(which clang)
 		export LD=$(which clang++) || $(which clang)
-		echo "[DONE] (found clang)"
+		echo "[DONE] (found $CC)"
 	elif command -v gcc &>/dev/null; then
 		export CC=$(which gcc)
 		export CXX=$(which g++)
 		export LD=$(which g++) || $(which gcc)
-		echo "[DONE] (found gcc)"
+		echo "[DONE] (found $CC)"
 	elif command -v cc &>/dev/null; then
 		export CC=$(which cc)
 		export CXX=$(which c++)
 		export LD=$(which c++) || $(which cc)
-		echo "[DONE] (found cc)"
+		echo "[DONE] (found $CC)"
+	else 
+		echo "[FAILED]"
+		echo "Failed to find a C compiler, please install clang or gcc"
 		exit 1
 	fi
 }
@@ -155,7 +158,8 @@ function check_tool() {
 	local name=$1
 
 	printf "Checking $name "
-	path=$(which $name)
+	path=$(which $name || true) || ""
+
 	if [ -z "$path" ]; then
 		echo "[NOT FOUND]"
 		echo "$name could not be found, please install $name"
@@ -181,7 +185,11 @@ function spinner() {
 
 	wait $pid || {
 		echo "[FAILED]"
-		echo "Failed to build $name, see $SCRIPTPATH/build/$name/build.log for more details"
+		echo "tail of build log:"
+		local log=$SCRIPTPATH/build/$name/build.log
+		tail -n 100 $log
+		echo ""
+		echo "Failed to build $name, see $log for more details"
 		exit 1
 	}
 
@@ -201,6 +209,7 @@ function builder() {
 	printf "Building $name "
 
 	if [ "$(build_target $name && echo "1" || echo "0")" == '0' ]; then
+		echo "[SKIPPED]"
 		return
 	fi
 
@@ -458,9 +467,10 @@ if build_target "dav1d"; then
 	check_tool meson
 fi
 
-# if build_target "opus"; then
-# 	check_tool libtool
-# fi
+if build_target "opus"; then
+	check_tool autoconf
+	check_tool libtoolize
+fi
 
 if build_target "ffmpeg"; then
 	check_tool pkg-config
