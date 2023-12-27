@@ -214,13 +214,10 @@ function builder() {
 	fi
 
 	local build_done=$SCRIPTPATH/build/$name/build-done
-	local install_done=$SCRIPTPATH/build/$name/install-done
 
 	local do_build='true'
-	local do_install=$install
 
 	local build_done_content=$(cat $build_done 2>/dev/null) || ""
-	local install_done_content=$(cat $install_done 2>/dev/null) || ""
 
 	local settings_value="$(settings)"
 
@@ -233,11 +230,7 @@ function builder() {
 		do_build='true'
 	fi
 
-	if [ "$install_done_content" = "$settings_value" ] && [ $do_build == 'false' ]; then
-		do_install='false'
-	fi
-
-	if [ "$do_build" = 'false' ] && [ "$do_install" = 'false' ]; then
+	if [ "$do_build" = 'false' ]; then
 		echo "[CACHED]"
 		return
 	fi
@@ -254,13 +247,7 @@ function builder() {
 		DOINSTALL=$do_install
 		$build_inner
 
-		if [ "$DOBUILD" = 'true' ]; then
-			echo $settings_value >$build_done
-		fi
-
-		if [ "$DOINSTALL" = 'true' ]; then
-			echo $settings_value >$install_done
-		fi
+		echo $settings_value >$build_done
 	}
 
 	inner $name >$SCRIPTPATH/build/$name/build.log 2>&1 &
@@ -268,190 +255,155 @@ function builder() {
 }
 
 function build_protobuf() {
-	if [ "$DOBUILD" = 'true' ]; then
-		cmake \
-			-GNinja \
-			-Dprotobuf_BUILD_TESTS=OFF \
-			-DCMAKE_BUILD_TYPE=Release \
-			-DABSL_PROPAGATE_CXX_STD=ON \
-			-DCMAKE_INSTALL_PREFIX=$OUTPATH \
-			$SOURCEPATH
+	cmake \
+		-GNinja \
+		-Dprotobuf_BUILD_TESTS=OFF \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DABSL_PROPAGATE_CXX_STD=ON \
+		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
+		$SOURCEPATH
 
-		cmake --build . --config Release -j $jobs
-	fi
+	cmake --build . --config Release -j $jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		cmake --install . --config Release
-	fi
+	cmake --install . --config Release
 }
 
 function build_x264() {
-	if [ "$DOBUILD" = 'true' ]; then
-		$SOURCEPATH/configure \
-			--prefix=$OUTPATH \
-			--enable-static \
-			--enable-pic \
-			--bindir=$OUTPATH/bin
+	$SOURCEPATH/configure \
+		--prefix=$OUTPATH \
+		--enable-static \
+		--enable-pic \
+		--bindir=$OUTPATH/bin
 
-		make -j$jobs
-	fi
+	make -j$jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		make install
-	fi
+	make install
 }
 
 function build_x265() {
-	if [ "$DOBUILD" = 'true' ]; then
-		cmake \
-			-GNinja \
-			-DCMAKE_BUILD_TYPE=Release \
-			-DCMAKE_INSTALL_PREFIX=$OUTPATH \
-			-DENABLE_SHARED=OFF \
-			$SOURCEPATH/source
+	cmake \
+		-GNinja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
+		-DENABLE_SHARED=OFF \
+		-DX265_LATEST_TAG=release \
+		$SOURCEPATH/source
 
-		cmake \
-			--build . \
-			--config Release \
-			-j $jobs
-	fi
+	cmake \
+		--build . \
+		--config Release \
+		-j $jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		cmake \
-			--install . \
-			--config Release
-	fi
+	cmake \
+		--install . \
+		--config Release
 }
 
 function build_libvpx() {
-	if [ "$DOBUILD" = 'true' ]; then
-		$SOURCEPATH/configure \
-			--prefix=$OUTPATH \
-			--disable-examples \
-			--disable-unit-tests \
-			--enable-vp9-highbitdepth \
-			--as=yasm \
-			--enable-pic
+	$SOURCEPATH/configure \
+		--prefix=$OUTPATH \
+		--disable-examples \
+		--disable-unit-tests \
+		--enable-vp9-highbitdepth \
+		--as=yasm \
+		--enable-pic
 
-		make -j$jobs
-	fi
+	make -j$jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		make install
-	fi
+	make install
 }
 
 function build_opus() {
-	if [ "$DOBUILD" = 'true' ]; then
-		$SOURCEPATH/autogen.sh
+	$SOURCEPATH/autogen.sh
 
-		$SOURCEPATH/configure \
-			--prefix=$OUTPATH \
-			--enable-static \
-			--disable-shared \
-			--with-pic
+	$SOURCEPATH/configure \
+		--prefix=$OUTPATH \
+		--enable-static \
+		--disable-shared \
+		--with-pic
 
-		make -j$jobs
-	fi
+	make -j$jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		make install
-	fi
+	make install
 }
 
 function build_dav1d() {
-	if [ "$DOBUILD" = 'true' ]; then
-		meson setup \
-			-Denable_tools=false \
-			-Denable_tests=false \
-			--default-library=static \
-			--prefix $OUTPATH \
-			--libdir $OUTPATH/lib \
-			$SOURCEPATH
+	meson setup \
+		-Denable_tools=false \
+		-Denable_tests=false \
+		--default-library=static \
+		--prefix $OUTPATH \
+		--libdir $OUTPATH/lib \
+		$SOURCEPATH
 
-		ninja -j $jobs
-	fi
+	ninja -j $jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		ninja install
-	fi
+	ninja install
 }
 
 function build_svt_av1() {
-	if [ "$DOBUILD" = 'true' ]; then
-		cmake \
-			-GNinja \
-			-DCMAKE_INSTALL_PREFIX=$OUTPATH \
-			-DCMAKE_BUILD_TYPE=Release \
-			-DBUILD_DEC=OFF \
-			-DBUILD_SHARED_LIBS=OFF \
-			$SOURCEPATH
+	cmake \
+		-GNinja \
+		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_DEC=OFF \
+		-DBUILD_SHARED_LIBS=OFF \
+		$SOURCEPATH
 
-		cmake \
-			--build . \
-			--config Release \
-			-j $jobs
-	fi
+	cmake \
+		--build . \
+		--config Release \
+		-j $jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		cmake \
-			--install . \
-			--config Release
-	fi
+	cmake \
+		--install . \
+		--config Release
 }
 
 function build_opencv() {
-	if [ "$DOBUILD" = 'true' ]; then
-		cmake \
-			-GNinja \
-			-DCMAKE_INSTALL_PREFIX=$OUTPATH \
-			-DCMAKE_BUILD_TYPE=Release \
-			-DBUILD_SHARED_LIBS=OFF \
-			-DBUILD_LIST=core,imgproc,imgcodecs \
-			$SOURCEPATH
+	cmake \
+		-GNinja \
+		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_SHARED_LIBS=OFF \
+		-DBUILD_LIST=core,imgproc,imgcodecs \
+		$SOURCEPATH
 
-		cmake \
-			--build . \
-			--config Release \
-			-j $jobs
-	fi
+	cmake \
+		--build . \
+		--config Release \
+		-j $jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		cmake \
-			--install . \
-			--config Release
-	fi
+	cmake \
+		--install . \
+		--config Release
 }
 
 function build_ffmpeg() {
-	if [ "$DOBUILD" = 'true' ]; then
-		PKG_CONFIG_PATH="$OUTPATH/lib/pkgconfig" $SOURCEPATH/configure \
-			--extra-libs="-lpthread -lm" \
-			--prefix="$OUTPATH" \
-			--pkg-config-flags="--static" \
-			--extra-cflags="-I$OUTPATH/include" \
-			--extra-ldflags="-L$OUTPATH/lib" \
-			--cc="$CC" \
-			--cxx="$CXX" \
-			--ld="$LD" \
-			--disable-static \
-			--enable-shared \
-			--enable-pic \
-			--enable-gpl \
-			--enable-libx264 \
-			--enable-libx265 \
-			--enable-libvpx \
-			--enable-libopus \
-			--enable-libdav1d \
-			--enable-libsvtav1 \
-			--enable-nonfree
+	PKG_CONFIG_PATH="$OUTPATH/lib/pkgconfig" $SOURCEPATH/configure \
+		--extra-libs="-lpthread -lm" \
+		--prefix="$OUTPATH" \
+		--pkg-config-flags="--static" \
+		--extra-cflags="-I$OUTPATH/include" \
+		--extra-ldflags="-L$OUTPATH/lib" \
+		--cc="$CC" \
+		--cxx="$CXX" \
+		--ld="$LD" \
+		--disable-static \
+		--enable-shared \
+		--enable-pic \
+		--enable-gpl \
+		--enable-libx264 \
+		--enable-libx265 \
+		--enable-libvpx \
+		--enable-libopus \
+		--enable-libdav1d \
+		--enable-libsvtav1 \
+		--enable-nonfree
 
-		make -j$jobs
-	fi
+	make -j$jobs
 
-	if [ "$DOINSTALL" = 'true' ]; then
-		make install
-	fi
+	make install
 }
 
 init "$@"
