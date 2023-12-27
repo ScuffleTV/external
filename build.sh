@@ -114,36 +114,6 @@ function init() {
 	fi
 }
 
-function check_cc() {
-	printf "Checking CC "
-
-	if [ ! -z "${CC}" ] || [ ! -z "${CXX}" ] || [ ! -z "${LD}" ]; then
-		echo "[SKIPPED]"
-		return
-	fi
-
-	if command -v clang &>/dev/null; then
-		export CC=$(which clang)
-		export CXX=$(which clang++) || $(which clang)
-		export LD=$(which clang++) || $(which clang)
-		echo "[DONE] (found $CC)"
-	elif command -v gcc &>/dev/null; then
-		export CC=$(which gcc)
-		export CXX=$(which g++)
-		export LD=$(which g++) || $(which gcc)
-		echo "[DONE] (found $CC)"
-	elif command -v cc &>/dev/null; then
-		export CC=$(which cc)
-		export CXX=$(which c++)
-		export LD=$(which c++) || $(which cc)
-		echo "[DONE] (found $CC)"
-	else 
-		echo "[FAILED]"
-		echo "Failed to find a C compiler, please install clang or gcc"
-		exit 1
-	fi
-}
-
 function settings() {
 	echo "CC=$CC CXX=$CXX LD=$LD INSTALL_DIR=$out_dir"
 }
@@ -264,7 +234,8 @@ function build_protobuf() {
 function build_x264() {
 	$SOURCEPATH/configure \
 		--prefix=$OUTPATH \
-		--enable-static \
+		--disable-static \
+		--enable-shared \
 		--enable-pic \
 		--bindir=$OUTPATH/bin
 
@@ -275,7 +246,7 @@ function build_x264() {
 
 function build_x265() {
 	pushd $SCRIPTPATH/x265
-	
+
 	TAG=$(git tag)
 	if [ -z "$TAG" ]; then
 		git tag 3.5
@@ -287,7 +258,7 @@ function build_x265() {
 		-GNinja \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
-		-DENABLE_SHARED=OFF \
+		-DENABLE_SHARED=ON \
 		$SOURCEPATH/source
 
 	cmake \
@@ -303,6 +274,8 @@ function build_x265() {
 function build_libvpx() {
 	$SOURCEPATH/configure \
 		--prefix=$OUTPATH \
+		--disable-static \
+		--enable-shared \
 		--disable-examples \
 		--disable-unit-tests \
 		--enable-vp9-highbitdepth \
@@ -318,10 +291,9 @@ function build_opus() {
 	$SOURCEPATH/autogen.sh
 
 	$SOURCEPATH/configure \
-		--prefix=$OUTPATH \
-		--enable-static \
-		--disable-shared \
-		--with-pic
+		--enable-shared \
+		--disable-static \
+		--prefix=$OUTPATH
 
 	make -j$jobs
 
@@ -332,7 +304,7 @@ function build_dav1d() {
 	meson setup \
 		-Denable_tools=false \
 		-Denable_tests=false \
-		--default-library=static \
+		--default-library=shared \
 		--prefix $OUTPATH \
 		--libdir $OUTPATH/lib \
 		$SOURCEPATH
@@ -348,7 +320,8 @@ function build_svt_av1() {
 		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_DEC=OFF \
-		-DBUILD_SHARED_LIBS=OFF \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_STATIC_LIBS=OFF \
 		$SOURCEPATH
 
 	cmake \
@@ -366,7 +339,8 @@ function build_opencv() {
 		-GNinja \
 		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
 		-DCMAKE_BUILD_TYPE=Release \
-		-DBUILD_SHARED_LIBS=OFF \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_STATIC_LIBS=OFF \
 		-DBUILD_LIST=core,imgproc \
 		-DENABLE_PIC=ON \
 		-DOPENCV_GENERATE_PKGCONFIG=ON \
@@ -419,7 +393,6 @@ function build_ffmpeg() {
 
 init "$@"
 
-check_cc
 check_tool ninja
 check_tool cmake
 check_tool make
@@ -466,7 +439,5 @@ builder "dav1d" "meson.build" build_dav1d
 builder "SVT-AV1" "CMakeLists.txt" build_svt_av1
 builder "opencv" "CMakeLists.txt" build_opencv
 builder "FFmpeg" "configure" build_ffmpeg
-
-ldconfig 2&>/dev/null || true
 
 echo "Done!"
