@@ -274,12 +274,20 @@ function build_x264() {
 }
 
 function build_x265() {
+	pushd $SCRIPTPATH/x265
+	
+	TAG=$(git tag)
+	if [ -z "$TAG" ]; then
+		git tag 3.5
+	fi
+
+	popd
+
 	cmake \
 		-GNinja \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX=$OUTPATH \
 		-DENABLE_SHARED=OFF \
-		-DX265_LATEST_TAG=release \
 		$SOURCEPATH/source
 
 	cmake \
@@ -424,6 +432,10 @@ if build_target "ffmpeg"; then
 	check_tool pkg-config
 fi
 
+if build_target "x265"; then
+	check_tool git
+fi
+
 echo "Settings:"
 echo "  Build: $build_lib"
 echo "  Clean: $clean"
@@ -443,5 +455,7 @@ builder "dav1d" "meson.build" build_dav1d
 builder "SVT-AV1" "CMakeLists.txt" build_svt_av1
 builder "opencv" "CMakeLists.txt" build_opencv
 builder "FFmpeg" "configure" build_ffmpeg
+
+ldconfig 2&>/dev/null || true
 
 echo "Done!"
