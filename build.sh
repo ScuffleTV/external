@@ -425,6 +425,7 @@ fi
 
 if build_target "opus"; then
 	check_tool autoconf
+	check_tool aclocal
 	check_tool libtoolize
 fi
 
