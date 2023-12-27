@@ -7,7 +7,7 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 
 jobs=$(nproc)
 verbose='false'
-build='all'
+build_lib='all'
 clean='false'
 install='false'
 out_dir="$SCRIPTPATH/out"
@@ -112,20 +112,6 @@ function init() {
 	fi
 }
 
-function check_cmake() {
-	if ! command -v cmake &>/dev/null; then
-		echo "cmake could not be found, please install cmake"
-		exit
-	fi
-}
-
-function check_ninja() {
-	if ! command -v ninja &>/dev/null; then
-		echo "ninja could not be found, please install ninja"
-		exit
-	fi
-}
-
 function check_cc() {
 	printf "Checking CC "
 
@@ -157,25 +143,17 @@ function settings() {
 	echo "CC=$CC CXX=$CXX LD=$LD INSTALL_DIR=$out_dir"
 }
 
-function check_yasm() {
-	if ! command -v yasm &>/dev/null; then
-		echo "yasm could not be found, please install yasm"
-		exit
-	fi
-}
+function check_tool() {
+	local name=$1
 
-function check_nasm() {
-	if ! command -v nasm &>/dev/null; then
-		echo "nasm could not be found, please install nasm"
-		exit
+	printf "Checking $name "
+	path=$(which $name)
+	if [ -z "$path" ]; then
+		echo "[NOT FOUND]"
+		echo "$name could not be found, please install $name"
+		exit 1
 	fi
-}
-
-function check_meson() {
-	if ! command -v meson &>/dev/null; then
-		echo "meson could not be found, please install meson"
-		exit
-	fi
+	echo "[FOUND] ($path)"
 }
 
 function spinner() {
@@ -459,17 +437,28 @@ function build_ffmpeg() {
 init "$@"
 
 check_cc
-check_ninja
-check_cmake
-check_nasm
+check_tool ninja
+check_tool cmake
+check_tool nasm
 
 if string_contain "libvpx" $build_lib; then
-	check_yasm
+	check_tool yasm
 fi
 
 if string_contain "dav1d" $build_lib; then
-	check_meson
+	check_tool meson
 fi
+
+echo "Settings:"
+echo "  Build: $build_lib"
+echo "  Clean: $clean"
+echo "  Install: $install"
+echo "  Prefix: $out_dir"
+echo "  CC: $CC"
+echo "  CXX: $CXX"
+echo "  LD: $LD"
+echo "  Jobs: $jobs"
+echo ""
 
 builder "protobuf" "CMakeLists.txt" build_protobuf
 builder "x264" "configure" build_x264
