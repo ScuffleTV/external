@@ -24,13 +24,21 @@ print_usage() {
 	printf "  -h, --help       Show this help message\n"
 }
 
-string_contain() { case $2 in *$1*) return 0 ;; *) return 1 ;; esac }
+build_target() {
+	local target=$1
+
+	if [[ $build_lib =~ "$target" ]]; then
+		return 0
+	fi
+
+	return 1
+}
 
 function parse_args() {
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
 		-v | --verbose)
-			verbose=1
+			verbose='true'
 			shift # Remove argument name from processing
 			;;
 		-j | --jobs)
@@ -107,7 +115,7 @@ function init() {
 		set -x
 	fi
 
-	if [ "$build_lib" = 'all' ]; then
+	if build_target "all" $build_lib; then
 		build_lib='protobuf x264 x265 libvpx opus dav1d svt-av1 opencv ffmpeg'
 	fi
 }
@@ -153,6 +161,7 @@ function check_tool() {
 		echo "$name could not be found, please install $name"
 		exit 1
 	fi
+
 	echo "[FOUND] ($path)"
 }
 
@@ -191,8 +200,7 @@ function builder() {
 
 	printf "Building $name "
 
-	if string_contain $name $build_lib; then
-		echo "[SKIPPED]"
+	if [ "$(build_target $name && echo "1" || echo "0")" == '0' ]; then
 		return
 	fi
 
@@ -216,12 +224,12 @@ function builder() {
 		do_build='true'
 	fi
 
-	if [ "$install_done_content" = "$settings_value" ]; then
+	if [ "$install_done_content" = "$settings_value" ] && [ $do_build == 'false' ]; then
 		do_install='false'
 	fi
 
 	if [ "$do_build" = 'false' ] && [ "$do_install" = 'false' ]; then
-		echo "[SKIPPED]"
+		echo "[CACHED]"
 		return
 	fi
 
@@ -442,19 +450,19 @@ check_tool cmake
 check_tool make
 check_tool nasm
 
-if string_contain "libvpx" $build_lib; then
+if build_target "libvpx"; then
 	check_tool yasm
 fi
 
-if string_contain "dav1d" $build_lib; then
+if build_target "dav1d"; then
 	check_tool meson
 fi
 
-if string_contain "opus" $build_lib; then
-	check_tool libtool
-fi
+# if build_target "opus"; then
+# 	check_tool libtool
+# fi
 
-if string_contain "ffmpeg" $build_lib; then
+if build_target "ffmpeg"; then
 	check_tool pkg-config
 fi
 
