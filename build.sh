@@ -431,6 +431,9 @@ function build_ffmpeg() {
 			--pkg-config-flags="--static" \
 			--extra-cflags="-I$OUTPATH/include" \
 			--extra-ldflags="-L$OUTPATH/lib" \
+			--cc="$CC" \
+			--cxx="$CXX" \
+			--ld="$LD" \
 			--disable-static \
 			--enable-shared \
 			--enable-pic \
