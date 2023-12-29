@@ -17,7 +17,7 @@ print_usage() {
 	printf "  -v, --verbose    Verbose output\n"
 	printf "  --clean          Clean build directory\n"
 	printf "  -j, --jobs       Number of jobs to run simultaneously (default $jobs)\n"
-	printf "  -b, --build      [all|protobuf|x264|x265|libvpx|opus|dav1d|svt-av1|opencv|ffmpeg] Build specific library (default: $build)\n"
+	printf "  -b, --build      [all|protobuf|x264|x265|libvpx|opus|dav1d|svt-av1|opencv|ffmpeg(+tls)] Build specific library (default: $build)\n"
 	printf "  --prefix         Out Prefix (default: $out_dir)\n"
 	printf "  -h, --help       Show this help message\n"
 }
@@ -102,6 +102,8 @@ function init() {
 
 	trap cleanup EXIT
 
+	out_dir=$(realpath "$out_dir") 
+
 	mkdir -p $out_dir
 	mkdir -p "$SCRIPTPATH/build"
 
@@ -109,8 +111,8 @@ function init() {
 		set -x
 	fi
 
-	if build_target "all" $build_lib; then
-		build_lib='protobuf x264 x265 libvpx opus dav1d svt-av1 opencv ffmpeg'
+	if build_target "all"; then
+		build_lib="$build_lib protobuf x264 x265 libvpx opus dav1d svt-av1 opencv ffmpeg"
 	fi
 }
 
@@ -365,26 +367,35 @@ function build_opencv() {
 }
 
 function build_ffmpeg() {
-	PKG_CONFIG_PATH="$OUTPATH/lib/pkgconfig" $SOURCEPATH/configure \
-		--extra-libs="-lpthread -lm" \
-		--prefix="$OUTPATH" \
-		--pkg-config-flags="--static" \
-		--extra-cflags="-I$OUTPATH/include" \
-		--extra-ldflags="-L$OUTPATH/lib" \
-		--cc="$CC" \
-		--cxx="$CXX" \
-		--ld="$LD" \
-		--disable-static \
-		--enable-shared \
-		--enable-pic \
-		--enable-gpl \
-		--enable-libx264 \
-		--enable-libx265 \
-		--enable-libvpx \
-		--enable-libopus \
-		--enable-libdav1d \
-		--enable-libsvtav1 \
+	args=(
+		--extra-libs="-lpthread -lm"
+		--prefix="$OUTPATH"
+		--pkg-config-flags="--static"
+		--extra-cflags="-I$OUTPATH/include"
+		--extra-ldflags="-L$OUTPATH/lib"
+		--cc="$CC"
+		--cxx="$CXX"
+		--ld="$LD"
+		--disable-static
+		--enable-shared
+		--enable-pic
+		--enable-gpl
+		--enable-libx264
+		--enable-libx265
+		--enable-libvpx
+		--enable-libopus
+		--enable-libdav1d
+		--enable-libsvtav1
 		--enable-nonfree
+	)
+
+	if build_target "ffmpeg+tls"; then
+		args+=(
+			--enable-openssl
+		)
+	fi
+
+	PKG_CONFIG_PATH="$OUTPATH/lib/pkgconfig" $SOURCEPATH/configure "${args[@]}"
 
 	make -j$jobs
 
