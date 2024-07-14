@@ -380,14 +380,44 @@ function build_ffmpeg() {
 		--enable-shared
 		--enable-pic
 		--enable-gpl
-		--enable-libx264
-		--enable-libx265
-		--enable-libvpx
-		--enable-libopus
-		--enable-libdav1d
-		--enable-libsvtav1
 		--enable-nonfree
 	)
+	
+	if build_target "dav1d"; then
+		args+=(
+			--enable-libdav1d
+		)
+	fi
+
+	if build_target "x264"; then
+		args+=(
+			--enable-libx264
+		)
+	fi
+
+	if build_target "x265"; then
+		args+=(
+			--enable-libx265
+		)
+	fi
+
+	if build_target "opus"; then
+		args+=(
+			--enable-libopus
+		)
+	fi
+
+	if build_target "libvpx"; then
+		args+=(
+			--enable-libvpx
+		)
+	fi
+
+	if build_target "svt-av1"; then
+		args+=(
+			--enable-libsvtav1
+		)
+	fi
 
 	if build_target "ffmpeg+tls"; then
 		args+=(
